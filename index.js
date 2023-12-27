@@ -5,17 +5,17 @@ const mongoose=require('mongoose');
 const cors = require("cors");
 dotEnv.config();
 
-mongoose.connect(process.env.DB_CONNECT);
-mongoose.Promise=global.Promise;
-let db=mongoose.connection;
+// mongoose.connect(process.env.DB_CONNECT);
+// mongoose.Promise=global.Promise;
+// let db=mongoose.connection;
 
-db.on('connected',()=>{
-    console.log('Connected to db');
-});
+// db.on('connected',()=>{
+//     console.log('Connected to db');
+// });
 
-db.on('error',(error)=>{
-   console.error('error',error);
-});
+// db.on('error',(error)=>{
+//    console.error('error',error);
+// });
 
 // Import routes
 const balanceRoute = require("./routes/balance");
