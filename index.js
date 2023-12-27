@@ -1,6 +1,5 @@
 const express = require('express')
 const app = express();
-const port = process.env.PORT;
 const dotEnv=require('dotenv');
 const mongoose=require('mongoose');
 const cors = require("cors");
@@ -44,6 +43,6 @@ app.use("/api/v1",tradeRoute);
 app.use("/api/v1",cfdContractsRoute);
 app.use("/api/v1",ledgerRoute);
 
-app.listen(port, () => {
-  console.log(`LP API listening on port ${port}`)
+app.listen(process.env.PORT || 8001, () => {
+  console.log(`LP API listening on port ${process.env.PORT}`)
 });
