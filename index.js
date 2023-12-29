@@ -5,18 +5,6 @@ const mongoose=require('mongoose');
 const cors = require("cors");
 dotEnv.config();
 
-// mongoose.connect(process.env.DB_CONNECT);
-// mongoose.Promise=global.Promise;
-// let db=mongoose.connection;
-
-// db.on('connected',()=>{
-//     console.log('Connected to db');
-// });
-
-// db.on('error',(error)=>{
-//    console.error('error',error);
-// });
-
 // Import routes
 const balanceRoute = require("./routes/balance");
 const marginRequirmentRoute=require("./routes/marginRequirments");
@@ -27,7 +15,10 @@ const orderRoute=require("./routes/order");
 const tradeRoute=require("./routes/trade");
 const cfdContractsRoute=require("./routes/cdfContracts");
 const ledgerRoute=require("./routes/ledger");
-
+const withdrawRoute=require("./routes/withdraw");
+const currencyRoute=require("./routes/currency");
+const fundingRatesRoute=require("./routes/fundingRates");
+const accountInfoRoute=require("./routes/accountInfo");
 // Middlewares
 app.use(express.json());
 app.use(cors());
@@ -42,7 +33,11 @@ app.use("/api/v1",orderRoute);
 app.use("/api/v1",tradeRoute);
 app.use("/api/v1",cfdContractsRoute);
 app.use("/api/v1",ledgerRoute);
+app.use("/api/v1",withdrawRoute);
+app.use("/api/v1",currencyRoute);
+app.use("/api/v1",fundingRatesRoute);
+app.use("/api/v1",accountInfoRoute);
 
-app.listen(process.env.PORT || 8001, () => {
-  console.log(`LP API listening on port ${process.env.PORT}`)
+app.listen(3000, () => {
+  console.log(`LP API listening on port ${3000}`)
 });

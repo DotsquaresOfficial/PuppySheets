@@ -3,10 +3,7 @@ const axios = require('axios');
 // Get multiple contract_entries
 const get_multiple_contract_entries = async (req, res) => {
     try {
-        let data = JSON.stringify({
-            'created__gte': req.body.created__gte,
-            'created__lt': req.body.created__lt
-          });
+       
 
         let config = {
             method: 'get',
@@ -16,7 +13,7 @@ const get_multiple_contract_entries = async (req, res) => {
               'Authorization': req.headers.authorization,
               "Content-Type": "application/json",
             },
-            data:data
+            data:req.body
           };
           
           axios.request(config)

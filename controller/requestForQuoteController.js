@@ -3,15 +3,7 @@ const axios = require('axios');
 // POST Request For Quote
 const post_request_for_quote = async (req, res) => {
     try {
-
         console.log(req.body);
-        let data = JSON.stringify({
-            'instrument': req.body.instrument,
-            'side': req.body.side,
-            'quantity': req.body.quantity,
-            'client_rfq_id': req.body.uuid
-          });
-
         let config = {
             method: 'post',
             maxBodyLength: Infinity,
@@ -20,7 +12,7 @@ const post_request_for_quote = async (req, res) => {
               'Authorization': req.headers.authorization,
               "Content-Type": "application/json",
             },
-            data:data
+            data:req.body
           };
           
           axios.request(config)

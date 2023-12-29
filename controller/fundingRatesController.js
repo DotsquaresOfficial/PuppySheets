@@ -1,17 +1,16 @@
 const axios = require('axios');
 
-// Get ledger
-const get_ledger= async (req, res) => {
+// funding_rates
+const funding_rates = async (req, res) => {
     try {
 
-        console.log(req.headers.authorization);
-        let config = {
+          let config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: 'https://api.uat.b2c2.net/ledger/',
+            url: 'https://api.uat.b2c2.net/funding_rates/',
             headers: { 
-                'Authorization': req.headers.authorization,
-                "Content-Type": "application/json",
+              'Authorization': req.headers.authorization,
+              "Content-Type": "application/json",
             },
             data:req.body
           };
@@ -31,6 +30,8 @@ const get_ledger= async (req, res) => {
       }
 };
 
+
+
 module.exports = {
-    get_ledger
+  funding_rates
   }
