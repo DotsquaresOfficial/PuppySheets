@@ -38,6 +38,6 @@ app.use("/api/v1",currencyRoute);
 app.use("/api/v1",fundingRatesRoute);
 app.use("/api/v1",accountInfoRoute);
 
-app.listen(3000, () => {
-  console.log(`LP API listening on port ${3000}`)
+app.listen(process.env.PORT||8001, () => {
+  console.log(`LP API listening on port ${8001}`)
 });
