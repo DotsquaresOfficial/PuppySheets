@@ -19,6 +19,7 @@ const withdrawRoute=require("./routes/withdraw");
 const currencyRoute=require("./routes/currency");
 const fundingRatesRoute=require("./routes/fundingRates");
 const accountInfoRoute=require("./routes/accountInfo");
+
 // Middlewares
 app.use(express.json());
 app.use(cors());
