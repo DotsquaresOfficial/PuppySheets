@@ -5,6 +5,7 @@ const mongoose=require('mongoose');
 const cors = require("cors");
 dotEnv.config();
 
+
 // Import routes
 const balanceRoute = require("./routes/balance");
 const marginRequirmentRoute=require("./routes/marginRequirments");
@@ -20,9 +21,14 @@ const currencyRoute=require("./routes/currency");
 const fundingRatesRoute=require("./routes/fundingRates");
 const accountInfoRoute=require("./routes/accountInfo");
 
+// Connecting with database
+const connectDB = require('./mongoose');
+
 // Middlewares
 app.use(express.json());
 app.use(cors());
+
+connectDB();
 
 // route Middlewares
 app.use("/api/v1", balanceRoute);
