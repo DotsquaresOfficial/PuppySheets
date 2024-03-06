@@ -1,35 +1,40 @@
 const axios = require('axios');
 
-// Get Balance
 const get_balance = async (req, res) => {
-    try {
+  try {
+    // Ensure that the request contains the Authorization header
+    const authorizationHeader = req.headers.authorization;
+    if (!authorizationHeader) {
+      return res.status(401).json({ error: 'Authorization header is missing' });
+    }
 
-        console.log(req.headers.authorization)
-        let config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: 'https://api.uat.b2c2.net/balance/',
-            headers: { 
-                'Authorization': req.headers.authorization
-            }
-          };
-          
-          axios.request(config)
-          .then((response) => {
-            console.log(JSON.stringify(response.data));
-            res.json(response.data);
-          })
-          .catch((error) => {
-            console.log(error);
-            res.json(error);
-          });
-      } catch (error) {
-        console.log(error);
-        res.json(error);
-      }
+    // Sanitize input to prevent injection attacks
+    const apiUrl = `${process.env.API_BASE_URL}balance/`;
+    const headers = { 'Authorization': authorizationHeader };
+
+    const response = await axios.get(apiUrl, { headers });
+
+    // Return the response data
+    res.json(response.data);
+
+  } catch (error) {
+    // Log the error for debugging purposes
+    console.error('Error occurred:', error.message);
+
+    // Handle known HTTP errors
+    if (error.response) {
+      const { status, data } = error.response;
+      return res.status(status).json({ error: data.error || 'An error occurred' });
+    }
+
+    // Handle network-related errors
+    if (error.request) {
+      return res.status(500).json({ error: 'Network error occurred' });
+    }
+
+    // Handle other types of errors
+    res.status(500).json({ error: 'An error occurred' });
+  }
 };
 
-
-module.exports = {
-    get_balance
-  }
+module.exports = { get_balance };
