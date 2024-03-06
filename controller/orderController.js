@@ -2,72 +2,6 @@ const axios = require('axios');
 const RFQ = require('../models/RFQ');
 const { v4: uuidv4 } = require('uuid');
 
-// // Post an order
-// const order = async (req, res) => {
-//     try {
-      
-//       if(req.body.client_rfq_id){
-//         RFQ.findOne({ client_rfq_id: req.body.client_rfq_id}).then((data)=>{
-     
-//           if (!data) {
-         
-//             axios.request(config)
-//             .then((response) => {
-//               // console.log(JSON.stringify(response.data));
-//               let config = {
-//                 method: 'post',
-//                 maxBodyLength: Infinity,
-//                 url: `${process.env.API_BASE_URL}order`,
-//                 headers: { 
-//                   'Authorization': req.headers.authorization, 
-//                   'Content-Type': 'application/json'
-//                 },
-//                 data : req.body
-//               };
-//               res.json(response.data);
-//             })
-//             .catch((error) => {
-//               console.log(error);
-//               res.json(error);
-//             });
-//           }else{
-//             const validTill = new Date(new Date().getTime() + 300 * 1000);
-//             let config = {
-//               method: 'post',
-//               maxBodyLength: Infinity,
-//               url: `${process.env.API_BASE_URL}order`,
-//               headers: { 
-//                 'Authorization': req.headers.authorization, 
-//                 'Content-Type': 'application/json'
-//               },
-//               data : {...data,valid_until:validTill,executing_unit:'risk-adding-strategy'}
-//             };
-           
-//             axios.request(config)
-//             .then((response) => {
-//               // console.log(JSON.stringify(response.data));
-//               res.json(response.data);
-//             })
-//             .catch((error) => {
-//               console.log(error);
-//               res.status(400).json(error);
-//             });
-//           }
-//         })
-//       }else{
-//         res.status(400).json({
-//           message:'client_rfq_id not found'
-//         });
-//       }
-     
-     
-//       } catch (error) {
-//         console.log(error);
-//         res.status(400).json(error);
-//       }
-// };
-
-
 const order = async (req, res) => {
   try {
 
@@ -100,7 +34,11 @@ const order = async (req, res) => {
       };
       // console.log(JSON.stringify(config));
       const response = await axios.post(config.url, config.data, { headers: config.headers });
-      res.json(response.data);
+      if(response.data.trades.length>0){
+        res.json({...response.data,message:'Trade successful'});
+      }else{
+        res.json({...response.data,message:'Trade unsuccessful'});
+      }
     }else{
       const config = {
         url: `${process.env.API_BASE_URL_V2}order/`,
@@ -108,7 +46,12 @@ const order = async (req, res) => {
         data:  req.body
       };
       const response = await axios.post(config.url, config.data, { headers: config.headers });
-      res.json(response.data);
+      if(response.data.trades.length>0){
+        res.json({...response.data,message:'Trade successful'});
+      }else{
+        res.json({...response.data,message:'Trade unsuccessful'});
+      }
+     
     }
     
   } catch (error) {
@@ -157,6 +100,8 @@ const get_an_order = async (req, res) => {
         res.status(400).json(error);
       }
 };
+
+
 // Get an order
 const get_multiple_order = async (req, res) => {
     try {
