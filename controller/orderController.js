@@ -17,11 +17,16 @@ const order = async (req, res) => {
     // Generate uuid 
     const uuid=uuidv4();
     
-    const { client_rfq_id } =body;
+    const { client_rfq_id ,wallet_id} =body;
 
     // Ensure that the request body contains the client_rfq_id
     if (!client_rfq_id) {
       return res.status(400).json({ message: 'client_rfq_id not found' });
+    }
+
+    // Ensure that the request body contains the client_rfq_id
+    if (!wallet_id) {
+      return res.status(400).json({ message: 'wallet_id not found' });
     }
 
     const data = await RFQ.findOne({ client_rfq_id });
@@ -34,10 +39,22 @@ const order = async (req, res) => {
       };
       // console.log(JSON.stringify(config));
       const response = await axios.post(config.url, config.data, { headers: config.headers });
+      const {order_id,trades,executed_price,created}=response.data;
       if(response.data.trades.length>0){
-        res.json({...response.data,message:'Trade successful'});
+        const {order,trade_id,price,quantity,side}=trades[0];
+        const responseWithdraw = await axios.post(`${process.env.API_BASE_URL}withdrawal`, {
+          "amount": `${quantity}`,
+          "currency": `${instrument.slice(3,6)}`,
+          "destination_address": {
+          "address_value": `${wallet_id}`,
+          "address_suffix": "tag0",
+          "address_protocol": "None"
+          }
+      }, { headers: config.headers });
+        console.log("withdrawResponse ",responseWithdraw);
+        res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${Number(price*quantity)} ${instrument.slice(0,3)}`,received:`${quantity} ${instrument.slice(3,6)}`,order_id:order_id});
       }else{
-        res.json({...response.data,message:'Trade unsuccessful'});
+        res.json({message:'*TRADE UNSUCCESSFUL!'});
       }
     }else{
       const config = {
@@ -45,12 +62,26 @@ const order = async (req, res) => {
         headers: { 'Authorization': req.headers.authorization, 'Content-Type': 'application/json' },
         data:  req.body
       };
-      const response = await axios.post(config.url, config.data, { headers: config.headers });
-      if(response.data.trades.length>0){
-        res.json({...response.data,message:'Trade successful'});
-      }else{
-        res.json({...response.data,message:'Trade unsuccessful'});
-      }
+       // console.log(JSON.stringify(config));
+       const response = await axios.post(config.url, config.data, { headers: config.headers });
+       const {order_id,trades,executed_price,created}=response.data;
+       if(response.data.trades.length>0){
+         const {order,trade_id,price,quantity,side}=trades[0];
+        
+         const responseWithdraw = await axios.post(`${process.env.API_BASE_URL}withdrawal`, {
+          "amount": `${quantity}`,
+          "currency": `${instrument.slice(3,6)}`,
+          "destination_address": {
+          "address_value": `${wallet_id}`,
+          "address_suffix": "tag0",
+          "address_protocol": "None"
+          }
+      }, { headers: config.headers });
+        console.log("withdrawResponse ",responseWithdraw);
+         res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${Number(price*quantity)} ${instrument.slice(0,3)}`,received:`${quantity} ${instrument.slice(3,6)}`,order_id:order_id});
+       }else{
+         res.json({message:'*TRADE UNSUCCESSFUL!'});
+       }
      
     }
     
