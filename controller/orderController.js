@@ -13,7 +13,6 @@ const order = async (req, res) => {
     if (!authorization) {
       return res.status(401).json({ error: 'Authorization header is missing' });
     }
-
     // Generate uuid 
     const uuid=uuidv4();
     
@@ -51,8 +50,7 @@ const order = async (req, res) => {
           "address_protocol": "None"
           }
       }, { headers: config.headers });
-        console.log("withdrawResponse ",responseWithdraw);
-        res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${Number(price*quantity)} ${instrument.slice(0,3)}`,received:`${quantity} ${instrument.slice(3,6)}`,order_id:order_id});
+        res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${instrument.slice(0,3)}`,received:`${Number(price*quantity)} ${instrument.slice(3,6)}`,order_id:order_id});
       }else{
         res.json({message:'*TRADE UNSUCCESSFUL!'});
       }
@@ -78,7 +76,7 @@ const order = async (req, res) => {
           }
       }, { headers: config.headers });
         console.log("withdrawResponse ",responseWithdraw);
-         res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${Number(price*quantity)} ${instrument.slice(0,3)}`,received:`${quantity} ${instrument.slice(3,6)}`,order_id:order_id});
+         res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${instrument.slice(0,3)}`,received:`${Number(price*quantity)} ${instrument.slice(3,6)}`,order_id:order_id});
        }else{
          res.json({message:'*TRADE UNSUCCESSFUL!'});
        }
