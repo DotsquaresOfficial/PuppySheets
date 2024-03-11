@@ -40,7 +40,7 @@ const order = async (req, res) => {
       const response = await axios.post(config.url, config.data, { headers: config.headers });
       const {order_id,trades,executed_price,created}=response.data;
       if(response.data.trades.length>0){
-        const {order,trade_id,price,quantity,side}=trades[0];
+        const {order,trade_id,quantity,side}=trades[0];
         const responseWithdraw = await axios.post(`${process.env.API_BASE_URL}withdrawal`, {
           "amount": `${quantity}`,
           "currency": `${instrument.slice(3,6)}`,
@@ -50,7 +50,7 @@ const order = async (req, res) => {
           "address_protocol": "None"
           }
       }, { headers: config.headers });
-        res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${instrument.slice(0,3)}`,received:`${Number(price*quantity)} ${instrument.slice(3,6)}`,order_id:order_id});
+      res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,received:`${Number(executed_price*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,quoted_rate:price,executed_price:executed_price,order_id:order_id});
       }else{
         res.json({message:'*TRADE UNSUCCESSFUL!'});
       }
@@ -62,9 +62,9 @@ const order = async (req, res) => {
       };
        // console.log(JSON.stringify(config));
        const response = await axios.post(config.url, config.data, { headers: config.headers });
-       const {order_id,trades,executed_price,created}=response.data;
+       const {order_id,trades,price,executed_price,created}=response.data;
        if(response.data.trades.length>0){
-         const {order,trade_id,price,quantity,side}=trades[0];
+         const {order,trade_id,quantity,side}=trades[0];
         
          const responseWithdraw = await axios.post(`${process.env.API_BASE_URL}withdrawal`, {
           "amount": `${quantity}`,
@@ -76,7 +76,7 @@ const order = async (req, res) => {
           }
       }, { headers: config.headers });
         console.log("withdrawResponse ",responseWithdraw);
-         res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${instrument.slice(0,3)}`,received:`${Number(price*quantity)} ${instrument.slice(3,6)}`,order_id:order_id});
+        res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,received:`${Number(executed_price*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,quoted_rate:price,executed_price:executed_price,order_id:order_id});
        }else{
          res.json({message:'*TRADE UNSUCCESSFUL!'});
        }
