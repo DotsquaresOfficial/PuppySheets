@@ -29,9 +29,6 @@ const funding_rates = async (req, res) => {
         res.json(error);
       }
 };
-
-
-
 module.exports = {
   funding_rates
   }

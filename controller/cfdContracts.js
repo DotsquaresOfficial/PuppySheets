@@ -3,8 +3,6 @@ const axios = require('axios');
 // Get multiple contract_entries
 const get_multiple_contract_entries = async (req, res) => {
     try {
-       
-
         let config = {
             method: 'get',
             maxBodyLength: Infinity,

@@ -16,27 +16,35 @@ const order = async (req, res) => {
     // Generate uuid 
     const uuid=uuidv4();
     
-    const { client_rfq_id ,wallet_id} =body;
+    const { client_rfq_id ,wallet_id,order_type} =body;
 
     // Ensure that the request body contains the client_rfq_id
     if (!client_rfq_id) {
-      return res.status(400).json({ message: 'client_rfq_id not found' });
+      return res.status(400).json({ message: 'client_rfq_id is required' });
     }
 
     // Ensure that the request body contains the client_rfq_id
     if (!wallet_id) {
-      return res.status(400).json({ message: 'wallet_id not found' });
+      return res.status(400).json({ message: 'wallet_id is required' });
     }
 
     const data = await RFQ.findOne({ client_rfq_id });
     if(data){
       const {instrument,side,quantity,price} = data;
+      let request_data= {instrument:instrument,side:side,quantity:quantity, valid_until: new Date(Date.now() + 300 * 1000), executing_unit: 'risk-adding-strategy',client_order_id:uuid,order_type:order_type.toUpperCase()||'MKT' }
+      if(order_type.toUpperCase()==='FOK'){
+            request_data={
+              ...request_data,
+              price:price,
+            }
+      }
+
       const config = {
         url: `${process.env.API_BASE_URL_V2}order/`,
         headers: { 'Authorization': req.headers.authorization, 'Content-Type': 'application/json' },
-        data:  {instrument:instrument,side:side,quantity:quantity,price:price, valid_until: new Date(Date.now() + 300 * 1000), executing_unit: 'risk-adding-strategy',client_order_id:uuid,order_type:'FOK' }
+        data:  request_data
       };
-      // console.log(JSON.stringify(config));
+      console.log(JSON.stringify(config));
       const response = await axios.post(config.url, config.data, { headers: config.headers });
       const {order_id,trades,executed_price,created}=response.data;
       if(response.data.trades.length>0){
@@ -50,37 +58,12 @@ const order = async (req, res) => {
           "address_protocol": "None"
           }
       }, { headers: config.headers });
-      res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,received:`${Number(executed_price*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,quoted_rate:price,executed_price:executed_price,order_id:order_id});
+      res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,received:`${Number(executed_price*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,quoted_rate:`${price}`,executed_price:executed_price,order_id:order_id});
       }else{
-        res.json({message:'*TRADE UNSUCCESSFUL!'});
+        res.status(400).json({message:'*TRADE UNSUCCESSFUL!'});
       }
     }else{
-      const config = {
-        url: `${process.env.API_BASE_URL_V2}order/`,
-        headers: { 'Authorization': req.headers.authorization, 'Content-Type': 'application/json' },
-        data:  req.body
-      };
-       // console.log(JSON.stringify(config));
-       const response = await axios.post(config.url, config.data, { headers: config.headers });
-       const {order_id,trades,price,executed_price,created}=response.data;
-       if(response.data.trades.length>0){
-         const {order,trade_id,quantity,side}=trades[0];
-        
-         const responseWithdraw = await axios.post(`${process.env.API_BASE_URL}withdrawal`, {
-          "amount": `${quantity}`,
-          "currency": `${instrument.slice(3,6)}`,
-          "destination_address": {
-          "address_value": `${wallet_id}`,
-          "address_suffix": "tag0",
-          "address_protocol": "None"
-          }
-      }, { headers: config.headers });
-        console.log("withdrawResponse ",responseWithdraw);
-        res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,received:`${Number(executed_price*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,quoted_rate:price,executed_price:executed_price,order_id:order_id});
-       }else{
-         res.json({message:'*TRADE UNSUCCESSFUL!'});
-       }
-     
+      return res.status(404).json({ error: 'client_rfq_id is not valid' });
     }
     
   } catch (error) {
