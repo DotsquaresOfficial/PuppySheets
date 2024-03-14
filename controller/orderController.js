@@ -31,7 +31,7 @@ const order = async (req, res) => {
     const data = await RFQ.findOne({ client_rfq_id });
     if(data){
       const {instrument,side,quantity,price} = data;
-      let request_data= {instrument:instrument,side:side,quantity:quantity, valid_until: new Date(Date.now() + 300 * 1000), executing_unit: 'risk-adding-strategy',client_order_id:uuid,order_type:order_type.toUpperCase()||'MKT' }
+      let request_data= {instrument:instrument,side:side,quantity:quantity, valid_until: new Date(Date.now() + 300 * 1000), executing_unit: 'risk-adding-strategy',client_order_id:uuid,order_type:order_type?order_type.toUpperCase():'MKT' }
       if(order_type.toUpperCase()==='FOK'){
             request_data={
               ...request_data,
