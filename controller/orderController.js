@@ -99,9 +99,9 @@ const order = async (req, res) => {
         trade_type:side,
         instrument : instrument,
         amount:`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
-        received:`${Number(executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 3))*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
-        quoted_price:`${price.toString().slice(0, (price.toString().indexOf('.') + 3))}`,
-        executed_price:`${executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 3))}`,
+        received:`${Number(executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 6))*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
+        quoted_price:`${price.toString().slice(0, (price.toString().indexOf('.') + 6))}`,
+        executed_price:`${executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 6))}`,
         order_id:order_id
       });
       }else{
