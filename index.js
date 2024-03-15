@@ -34,7 +34,7 @@ connectDB();
 app.use("/api/v1", balanceRoute);
 // app.use("/api/v1",marginRequirmentRoute);
 // app.use("/api/v1",openPositionRoute);
-// app.use("/api/v1",instrumentsRoute);
+app.use("/api/v1",instrumentsRoute);
 app.use("/api/v1",requestForQuoteRoute);
 app.use("/api/v1",orderRoute);
 // app.use("/api/v1",tradeRoute);

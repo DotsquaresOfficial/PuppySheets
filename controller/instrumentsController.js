@@ -10,7 +10,7 @@ const get_instruments = async (req, res) => {
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: 'https://api.uat.b2c2.net/instruments/',
+            url: `${process.env.API_BASE_URL}instruments/`,
             headers: { 
               'Authorization': req.headers.authorization,
               "Content-Type": "application/json",
