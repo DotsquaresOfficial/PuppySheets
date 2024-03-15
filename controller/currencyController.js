@@ -7,7 +7,7 @@ const currency = async (req, res) => {
           let config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: 'https://api.uat.b2c2.net/currency/',
+            url: `${process.env.API_BASE_URL}currency/`,
             headers: { 
               'Authorization': req.headers.authorization,
             },
