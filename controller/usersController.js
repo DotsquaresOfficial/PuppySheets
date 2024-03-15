@@ -13,8 +13,7 @@ const registerUser = async (req, res) => {
               'Content-Type': 'application/json'
             },
             data : req.body
-          };
-          
+          };          
           axios.request(config)
           .then((response) => {
             console.log(JSON.stringify(response.data));

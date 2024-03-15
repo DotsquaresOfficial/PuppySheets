@@ -32,18 +32,18 @@ connectDB();
 
 // route Middlewares
 app.use("/api/v1", balanceRoute);
-app.use("/api/v1",marginRequirmentRoute);
-app.use("/api/v1",openPositionRoute);
-app.use("/api/v1",instrumentsRoute);
+// app.use("/api/v1",marginRequirmentRoute);
+// app.use("/api/v1",openPositionRoute);
+// app.use("/api/v1",instrumentsRoute);
 app.use("/api/v1",requestForQuoteRoute);
 app.use("/api/v1",orderRoute);
-app.use("/api/v1",tradeRoute);
-app.use("/api/v1",cfdContractsRoute);
-app.use("/api/v1",ledgerRoute);
-app.use("/api/v1",withdrawRoute);
-app.use("/api/v1",currencyRoute);
-app.use("/api/v1",fundingRatesRoute);
-app.use("/api/v1",accountInfoRoute);
+// app.use("/api/v1",tradeRoute);
+// app.use("/api/v1",cfdContractsRoute);
+// app.use("/api/v1",ledgerRoute);
+// app.use("/api/v1",withdrawRoute);
+// app.use("/api/v1",currencyRoute);
+// app.use("/api/v1",fundingRatesRoute);
+// app.use("/api/v1",accountInfoRoute);
 
 app.listen(process.env.PORT||8001, () => {
   console.log(`LP API listening on port ${8001}`)

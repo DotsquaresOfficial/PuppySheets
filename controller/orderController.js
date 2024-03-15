@@ -38,7 +38,6 @@ const order = async (req, res) => {
               price:price,
             }
       }
-
       const config = {
         url: `${process.env.API_BASE_URL_V2}order/`,
         headers: { 'Authorization': req.headers.authorization, 'Content-Type': 'application/json' },
@@ -49,16 +48,62 @@ const order = async (req, res) => {
       const {order_id,trades,executed_price,created}=response.data;
       if(response.data.trades.length>0){
         const {order,trade_id,quantity,side}=trades[0];
-        const responseWithdraw = await axios.post(`${process.env.API_BASE_URL}withdrawal`, {
-          "amount": `${quantity}`,
-          "currency": `${instrument.slice(3,6)}`,
-          "destination_address": {
-          "address_value": `${wallet_id}`,
-          "address_suffix": "tag0",
-          "address_protocol": "None"
-          }
-      }, { headers: config.headers });
-      res.json({message:'*TRADE SUCCESSFUL!',created:created,trade_type:side, instrument : instrument,amount:`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,received:`${Number(executed_price*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,quoted_rate:`${price}`,executed_price:executed_price,order_id:order_id});
+
+        const inputDateString = created.toString();
+
+        // Parse the input date string
+        const inputDate = new Date(inputDateString);
+
+        // Extract the components of the date and time
+        const year = inputDate.getFullYear();
+        const month = String(inputDate.getMonth() + 1).padStart(2, '0');
+        const day = String(inputDate.getDate()).padStart(2, '0');
+        const hours = String(inputDate.getHours()).padStart(2, '0');
+        const minutes = String(inputDate.getMinutes()).padStart(2, '0');
+        const seconds = String(inputDate.getSeconds()).padStart(2, '0');
+        const milliseconds = String(inputDate.getMilliseconds()).padStart(3, '0');
+
+        // Construct the new date string in the desired format
+        const newDateString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`;
+
+        var data_withdraw = JSON.stringify({
+          "created":newDateString ,
+          "trade_type": side,
+          "instrument": instrument,
+          "amount": quantity,
+          "received":Number(executed_price*quantity),
+          "quoted_rate": price,
+          "executed_price": executed_price,
+          "order_id": order_id,
+          "wallet_address": wallet_id
+         });
+        
+        var config_withdraw = {
+          method: 'post',
+          url: 'https://portal.bcxpro.io/api/trade-samy',
+          headers: {
+            'Authorization': req.headers.authorization,        
+            'Content-Type': 'application/json'
+          },
+          data : data_withdraw
+        };        
+      try{
+       const response= await axios(config_withdraw);
+       console.log(response);
+      }catch(ex){
+        console.log(ex);
+      }
+      res.json({
+        message:'*TRADE SUCCESSFUL!',
+        created:created,
+        trade_type:side,
+        instrument : instrument,
+        amount:`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
+        received:`${Number(executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 3))*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
+        quoted_price:`${price.toString().slice(0, (price.toString().indexOf('.') + 3))}`,
+        executed_price:`${executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 3))}`,
+        order_id:order_id
+      });
       }else{
         res.status(400).json({message:'*TRADE UNSUCCESSFUL!'});
       }
@@ -93,7 +138,7 @@ const get_an_order = async (req, res) => {
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: 'https://api.uat.b2c2.net/order/'+req.params.order_id,
+            url: `${process.env.API_BASE_URL_V2}order/`+req.params.order_id,
             headers: { 
               'Authorization': req.headers.authorization
             },
@@ -120,7 +165,7 @@ const get_multiple_order = async (req, res) => {
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: 'https://api.uat.b2c2.net/order/',
+            url: `${process.env.API_BASE_URL_V2}order/`,
             headers: { 
               'Authorization': req.headers.authorization
             },

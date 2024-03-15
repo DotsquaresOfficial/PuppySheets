@@ -33,7 +33,7 @@ const post_request_for_quote = async (req, res) => {
     await RFQ.findOneAndUpdate({ client_rfq_id }, { created, valid_until, rfq_id, client_rfq_id, quantity, side, instrument, price }, { upsert: true });
 
     // Respond with the modified response data
-    res.json({ ...data, valid_until });
+    res.json({ ...data, valid_until:valid_until, price:price.slice(0, (price.toString().indexOf('.') + 3))});
   } catch (error) {
       // Log the error for debugging purposes
       console.error('Error occurred:', error.message);
