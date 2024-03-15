@@ -70,8 +70,8 @@ const order = async (req, res) => {
           "created":newDateString ,
           "trade_type": side,
           "instrument": instrument,
-          "amount": quantity,
-          "received":Number(executed_price*quantity),
+          "received": quantity,
+          "amount":Number(executed_price*quantity),
           "quoted_rate": price,
           "executed_price": executed_price,
           "order_id": order_id,
@@ -98,8 +98,9 @@ const order = async (req, res) => {
         created:created,
         trade_type:side,
         instrument : instrument,
-        amount:`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
-        received:`${Number(executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 6))*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
+      
+        amount  :`${Number(executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 6))*quantity)} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
+        received :`${quantity} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
         quoted_price:`${price.toString().slice(0, (price.toString().indexOf('.') + 6))}`,
         executed_price:`${executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 6))}`,
         order_id:order_id
