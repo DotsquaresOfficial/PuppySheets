@@ -34,6 +34,7 @@ app.use("/api/v1", balanceRoute);
 app.use("/api/v1",instrumentsRoute);
 app.use("/api/v1",requestForQuoteRoute);
 app.use("/api/v1",orderRoute);
+app.use("/api/v1",withdrawRoute);
 
 
 app.listen(process.env.PORT||8001, () => {

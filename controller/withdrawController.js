@@ -1,120 +1,40 @@
 const axios = require('axios');
-
-// Withdraw
-const withdraw = async (req, res) => {
-    try {
-
-          let config = {
-            method: 'post',
-            maxBodyLength: Infinity,
-            url: 'https://api.uat.b2c2.net/withdrawal',
-            headers: { 
-              'Authorization': `Token ${process.env.AUTHORIZATION}`,
-              'Content-Type': 'application/json'
-            },
-            data : req.body
-          };
-          
-          axios.request(config)
-          .then((response) => {
-            console.log(JSON.stringify(response.data));
-            res.json(response.data);
-          })
-          .catch((error) => {
-            console.log(error);
-            res.json(error);
-          });
-      } catch (error) {
-        console.log(error);
-        res.json(error);
-      }
-};
-
-
+const FormData = require('form-data');
 // Get a Withdraw
 const get_a_withdraw= async (req, res) => {
     try {
-      let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: 'https://api.uat.b2c2.net/withdrawal/'+req.params.withdrawal_id,
-        headers: { 
-          'Authorization': `Token ${process.env.AUTHORIZATION}`,
-        },
-      };
-      axios.request(config)
-      .then((response) => {
-        res.json(response.data);
-        console.log(JSON.stringify(response.data));
-      })
-      .catch((error) => {
-        res.json(error);
-        console.log(error);
-      });
       
+      let config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: 'https://portal.bcxpro.io/api/withdrawal-status',
+        headers: { 
+          'Content-Type': 'application/json'
+        },
+        data : req.body
+      };
+      console.log(req.body);
+      const response= await axios.request(config)
+      console.log(response.data);
+      const {status,txn_id,date,type,amount,notes,order_id,wallet_address_other}=response.data[0];
+      res.json({
+              "status": status,
+              "txn_id": txn_id,
+              "date": date,
+              "type": type,
+              "amount":amount,
+              "notes": notes,
+              "order_id": order_id,
+              "wallet_address": wallet_address_other
+          }
+      );
       } catch (error) {
         console.log(error);
-        res.json(error);
+        res.status(400).json(error);
       }
 };
 
-// Delete a Withdraw
-const delete_a_withdraw= async (req, res) => {
-    try {
-      let config = {
-        method: 'delete',
-        maxBodyLength: Infinity,
-        url: 'https://api.uat.b2c2.net/withdrawal/'+req.params.withdrawal_id,
-        headers: { 
-          'Authorization': `Token ${process.env.AUTHORIZATION}`,
-        },
-      };
-      axios.request(config)
-      .then((response) => {
-        res.json(response.data);
-        console.log(JSON.stringify(response.data));
-      })
-      .catch((error) => {
-        res.json(error);
-        console.log(error);
-      });
-      
-      } catch (error) {
-        console.log(error);
-        res.json(error);
-      }
-};
-
-// Get All Withdraw
-const get_all_withdraw= async (req, res) => {
-    try {
-      let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: 'https://api.uat.b2c2.net/withdrawal/',
-        headers: { 
-          'Authorization': `Token ${process.env.AUTHORIZATION}`,
-        },
-      };
-      axios.request(config)
-      .then((response) => {
-        res.json(response.data);
-        console.log(JSON.stringify(response.data));
-      })
-      .catch((error) => {
-        res.json(error);
-        console.log(error);
-      });
-      
-      } catch (error) {
-        console.log(error);
-        res.json(error);
-      }
-};
 
 module.exports = {
-    withdraw,
     get_a_withdraw,
-    delete_a_withdraw,
-    get_all_withdraw
   }

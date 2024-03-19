@@ -2,7 +2,7 @@ const axios = require('axios');
 const RFQ = require('../models/RFQ');
 const { v4: uuidv4 } = require('uuid');
 const FormData = require('form-data');
-
+const Trade = require('../models/Trade'); 
 const order = async (req, res) => {
   try {
 
@@ -33,7 +33,11 @@ const order = async (req, res) => {
 
       // Ensure that the request body contains the client_rfq_id
       if (new Date(valid_until)<new Date()) {
-        return res.status(400).json({ message: 'validity of client_rfq_id is expired.' });
+        return res.status(400).json({
+          "success": false,
+          "message": "Operation unsuccessful.",
+          "error": "The validity period for the client RFQ ID has expired."
+      });
       }
       const apiUrl = `https://portal.bcxpro.io/api/check-balance`;
       const responseBalance = await axios.get(apiUrl);
@@ -43,10 +47,11 @@ const order = async (req, res) => {
         acc[currency] = `${amount}`;
         return acc;
       }, {});
+
       const fullBalance={...balanceData,EUR:responseBalance.data.eur_balance}
 
       // Ensure user have enough balance
-      if(fullBalance[`${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`]<`${Number(price.toString().slice(0, (price.toString().indexOf('.') + 6))*quantity)}`){
+      if(Number(fullBalance[`${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`])<Number(price.toString().slice(0, (price.toString().indexOf('.') + 6))*quantity)){
         return res.status(400).json({
            message: `*Insufficient Balance!`,
            available: `${fullBalance[`${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`]} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)} `,
@@ -128,13 +133,27 @@ const order = async (req, res) => {
       }catch(ex){
         console.log(ex);
       }
+      await RFQ.deleteOne({ client_rfq_id });
+
+        const trade = new Trade({
+        message:'*TRADE SUCCESSFUL!',
+        created:created,
+        trade_type:side,
+        instrument : instrument,
+        price:`${price}`,
+        cost :`${Number(price*quantity).toFixed(2)} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
+        received :`${quantity} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
+        order_id:`${withdraw_uuid}`
+        });
+
+      await  trade.save();
       res.json({
         message:'*TRADE SUCCESSFUL!',
         created:created,
         trade_type:side,
         instrument : instrument,
         price:`${price}`,
-        cost :`${Number(price*quantity)} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
+        cost :`${Number(price*quantity).toFixed(2)} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
         received :`${quantity} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
         // quoted_price:`${price.toString().slice(0, (price.toString().indexOf('.') + 6))}`,
         // executed_price:`${executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 6))}`,
@@ -144,7 +163,11 @@ const order = async (req, res) => {
         res.status(400).json({message:'*TRADE UNSUCCESSFUL!'});
       }
     }else{
-      return res.status(404).json({ error: 'client_rfq_id is not valid' });
+      return res.status(404).json({
+        "success": false,
+        "message": "Operation unsuccessful.",
+        "error": "The provided client RFQ ID is either invalid or has already been used."
+    });
     }
     
   } catch (error) {
@@ -168,55 +191,18 @@ const order = async (req, res) => {
 };
 
 // Get an order
-const get_an_order = async (req, res) => {
-    try {
-        // console.log(req);
-        let config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: `${process.env.API_BASE_URL}order/`+req.params.order_id,
-            headers: { 
-              'Authorization': `Token ${process.env.AUTHORIZATION}`,
-            },
-          };
-          axios.request(config)
-          .then((response) => {
-            // console.log(JSON.stringify(response.data));
-            res.json(response.data);
-          })
-          .catch((error) => {
-            console.log(error);
-            res.status(400).json(error);
-          });
-      } catch (error) {
-        console.log(error);
-        res.status(400).json(error);
-      }
-};
-
-
-// Get an order
 const get_multiple_order = async (req, res) => {
     try {
-        let config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: `${process.env.API_BASE_URL}order/`,
-            headers: { 
-              'Authorization': `Token ${process.env.AUTHORIZATION}`,
-            },
-            data:req.body
-          };
-          
-          axios.request(config)
-          .then((response) => {
-            console.log(JSON.stringify(response.data));
-            res.json(response.data);
-          })
-          .catch((error) => {
-            console.log(error);
-            res.status(400).json(error);
-          });
+       const allTrades = await Trade.find();
+       const trades = allTrades.map(trade => {
+        // delete trade._id;
+        // delete trade.__v;
+        // return trade
+        const {message,created,trade_type,instrument,price,cost,received,order_id}=trade;
+        return {message,created,trade_type,instrument,price,cost,received,order_id};
+    });
+    
+       res.json({trades});
       } catch (error) {
         console.log(error);
         res.status(400).json(error);
@@ -225,6 +211,5 @@ const get_multiple_order = async (req, res) => {
 
 module.exports = {
     order,
-    get_an_order,
     get_multiple_order
   }
