@@ -9,7 +9,7 @@ const funding_rates = async (req, res) => {
             maxBodyLength: Infinity,
             url: 'https://api.uat.b2c2.net/funding_rates/',
             headers: { 
-              'Authorization': req.headers.authorization,
+              'Authorization': `Token ${process.env.AUTHORIZATION}`,
               "Content-Type": "application/json",
             },
             data:req.body

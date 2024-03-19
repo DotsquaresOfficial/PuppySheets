@@ -9,7 +9,7 @@ const withdraw = async (req, res) => {
             maxBodyLength: Infinity,
             url: 'https://api.uat.b2c2.net/withdrawal',
             headers: { 
-              'Authorization': req.headers.authorization,
+              'Authorization': `Token ${process.env.AUTHORIZATION}`,
               'Content-Type': 'application/json'
             },
             data : req.body
@@ -39,7 +39,7 @@ const get_a_withdraw= async (req, res) => {
         maxBodyLength: Infinity,
         url: 'https://api.uat.b2c2.net/withdrawal/'+req.params.withdrawal_id,
         headers: { 
-          'Authorization': req.headers.authorization,
+          'Authorization': `Token ${process.env.AUTHORIZATION}`,
         },
       };
       axios.request(config)
@@ -66,7 +66,7 @@ const delete_a_withdraw= async (req, res) => {
         maxBodyLength: Infinity,
         url: 'https://api.uat.b2c2.net/withdrawal/'+req.params.withdrawal_id,
         headers: { 
-          'Authorization': req.headers.authorization,
+          'Authorization': `Token ${process.env.AUTHORIZATION}`,
         },
       };
       axios.request(config)
@@ -93,7 +93,7 @@ const get_all_withdraw= async (req, res) => {
         maxBodyLength: Infinity,
         url: 'https://api.uat.b2c2.net/withdrawal/',
         headers: { 
-          'Authorization': req.headers.authorization,
+          'Authorization': `Token ${process.env.AUTHORIZATION}`,
         },
       };
       axios.request(config)

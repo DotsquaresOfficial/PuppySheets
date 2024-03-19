@@ -8,7 +8,7 @@ const get_open_positions = async (req, res) => {
             maxBodyLength: Infinity,
             url: 'https://api.uat.b2c2.net/cfd/open_positions/',
             headers: { 
-              'Authorization': req.headers.authorization
+              'Authorization': `Token ${process.env.AUTHORIZATION}`,
             }
           };
           

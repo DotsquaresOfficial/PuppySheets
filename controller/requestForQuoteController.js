@@ -6,26 +6,29 @@ const post_request_for_quote = async (req, res) => {
   try {
 
     // Destructure required properties from the request body
-    const { authorization } = req.headers;
     const { body } = req;
-
-    // Ensure that the request contains the Authorization header
-    if (!authorization) {
-      return res.status(401).json({ error: 'Authorization header is missing' });
-    }
 
     // Generate uuid 
     const uuid=uuidv4();
 
     // Send the request for quote to the API
     const response = await axios.post(`${process.env.API_BASE_URL}request_for_quote/`, {...body,client_rfq_id:`${uuid}`}, {
-      headers: { 'Authorization': authorization, 'Content-Type': 'application/json' }
+      headers: {    'Authorization': `Token ${process.env.AUTHORIZATION}`, 'Content-Type': 'application/json' }
     });
+
+    const apiUrl = `https://portal.bcxpro.io/api/check-balance`;
+    const feeResponse = await axios.get(apiUrl);
+
+    const feePercentage=feeResponse.data.client_fee;
 
     // Extract relevant data from the response
     const { data } = response;
-    const { created, rfq_id, client_rfq_id, quantity, side, instrument, price } = data;
-
+    let { created, rfq_id, client_rfq_id, quantity, side, instrument, price } = data;
+    console.log(price,"Before");
+    price=(Number(price)+Number((Number(price)*Number(feePercentage))/100)).toString();
+    console.log(price,"After Fee Before Fixed");
+    price=Number(price).toFixed(5).toString()
+    console.log(price,"After Fixed");
     // Calculate the valid_until timestamp (100 seconds after the creation time)
     const valid_until = new Date((new Date(created)).getTime() + 100 * 1000);
 
@@ -33,7 +36,7 @@ const post_request_for_quote = async (req, res) => {
     await RFQ.findOneAndUpdate({ client_rfq_id }, { created, valid_until, rfq_id, client_rfq_id, quantity, side, instrument, price }, { upsert: true });
 
     // Respond with the modified response data
-    res.json({ ...data,quantity:quantity.slice(0, (quantity.toString().indexOf('.') + 3)), valid_until:valid_until, price:price.slice(0, (price.toString().indexOf('.') + 6))});
+    res.json({ ...data,quantity:quantity.slice(0, (quantity.toString().indexOf('.') + 3)), valid_until:valid_until,price:price});
   } catch (error) {
       // Log the error for debugging purposes
       console.error('Error occurred:', error.message);

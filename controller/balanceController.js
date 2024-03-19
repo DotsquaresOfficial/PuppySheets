@@ -2,20 +2,19 @@ const axios = require('axios');
 
 const get_balance = async (req, res) => {
   try {
-    // Ensure that the request contains the Authorization header
-    const authorizationHeader = req.headers.authorization;
-    if (!authorizationHeader) {
-      return res.status(401).json({ error: 'Authorization header is missing' });
-    }
 
-    // Sanitize input to prevent injection attacks
-    const apiUrl = `${process.env.API_BASE_URL}balance/`;
-    const headers = { 'Authorization': authorizationHeader };
+    const apiUrl = `https://portal.bcxpro.io/api/check-balance`;
+    const response = await axios.get(apiUrl);
 
-    const response = await axios.get(apiUrl, { headers });
+    const balanceData = response.data.getTotCryptoBalance.reduce((acc, e) => {
+      const currency = e.currency;
+      const amount = e.crypto_amt;
+      acc[currency] = `${amount}`;
+      return acc;
+    }, {});
 
     // Return the response data
-    res.json(response.data);
+    res.json({...balanceData,EUR:response.data.eur_balance});
 
   } catch (error) {
     // Log the error for debugging purposes

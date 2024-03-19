@@ -9,7 +9,7 @@ const account_info = async (req, res) => {
             maxBodyLength: Infinity,
             url: 'https://api.uat.b2c2.net/account_info/',
             headers: { 
-              'Authorization': req.headers.authorization,
+              'Authorization': `Token ${process.env.AUTHORIZATION}`,
             },
           };
           

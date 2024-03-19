@@ -12,7 +12,7 @@ const get_margin_requirments = async (req, res) => {
             maxBodyLength: Infinity,
             url: 'https://api.uat.b2c2.net/margin_requirements/',
             headers: { 
-              'Authorization': req.headers.authorization,
+              'Authorization': `Token ${process.env.AUTHORIZATION}`,
               "Content-Type": "application/json",
             },
             data:data

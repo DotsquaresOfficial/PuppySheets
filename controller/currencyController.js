@@ -9,7 +9,7 @@ const currency = async (req, res) => {
             maxBodyLength: Infinity,
             url: `${process.env.API_BASE_URL}currency/`,
             headers: { 
-              'Authorization': req.headers.authorization,
+              'Authorization': `Token ${process.env.AUTHORIZATION}`
             },
           };
           

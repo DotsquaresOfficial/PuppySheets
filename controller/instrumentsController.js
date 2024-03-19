@@ -12,7 +12,7 @@ const get_instruments = async (req, res) => {
             maxBodyLength: Infinity,
             url: `${process.env.API_BASE_URL}instruments/`,
             headers: { 
-              'Authorization': req.headers.authorization,
+              'Authorization': `Token ${process.env.AUTHORIZATION}`,
               "Content-Type": "application/json",
             },
             data:data

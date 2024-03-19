@@ -9,7 +9,7 @@ const registerUser = async (req, res) => {
             maxBodyLength: Infinity,
             url: 'https://api.uat.b2c2.net/withdrawal',
             headers: { 
-              'Authorization': req.headers.authorization,
+              'Authorization': `Token ${process.env.AUTHORIZATION}`,
               'Content-Type': 'application/json'
             },
             data : req.body
@@ -38,7 +38,7 @@ const loginUser= async (req, res) => {
         maxBodyLength: Infinity,
         url: 'https://api.uat.b2c2.net/withdrawal/'+req.params.withdrawal_id,
         headers: { 
-          'Authorization': req.headers.authorization,
+          'Authorization': `Token ${process.env.AUTHORIZATION}`,
         },
       };
       axios.request(config)
@@ -65,7 +65,7 @@ const loginAdmin= async (req, res) => {
         maxBodyLength: Infinity,
         url: 'https://api.uat.b2c2.net/withdrawal/'+req.params.withdrawal_id,
         headers: { 
-          'Authorization': req.headers.authorization,
+          'Authorization': `Token ${process.env.AUTHORIZATION}`,
         },
       };
       axios.request(config)

@@ -9,7 +9,7 @@ const get_a_trade = async (req, res) => {
             maxBodyLength: Infinity,
             url: 'https://api.uat.b2c2.net/trade/'+req.params.trade_id,
             headers: { 
-              'Authorization': req.headers.authorization
+              'Authorization': `Token ${process.env.AUTHORIZATION}`,
             }
           };
           
@@ -37,7 +37,7 @@ const get_multiple_trade = async (req, res) => {
         maxBodyLength: Infinity,
         url: 'https://api.uat.b2c2.net/trade',
         headers: { 
-          'Authorization': req.headers.authorization,
+          'Authorization': `Token ${process.env.AUTHORIZATION}`,
           'Content-Type': 'application/json'
         },
         data : req.body
