@@ -3,11 +3,13 @@ const RFQ = require('../models/RFQ');
 const { v4: uuidv4 } = require('uuid');
 const FormData = require('form-data');
 const Trade = require('../models/Trade'); 
+const AccessKey = require('../models/AccessKey');
 const order = async (req, res) => {
   try {
 
     // Destructure required properties from the request body
     const { body } = req;
+    const { client_rfq_id ,wallet_id,order_type, company_id,access_token} =body;
 
     // Generate uuid 
     const uuid=uuidv4();
@@ -15,8 +17,6 @@ const order = async (req, res) => {
     // Generate withdraw uuid 
     const withdraw_uuid=uuidv4();
     
-    const { client_rfq_id ,wallet_id,order_type} =body;
-
     // Ensure that the request body contains the client_rfq_id
     if (!client_rfq_id) {
       return res.status(400).json({ message: 'client_rfq_id is required' });
@@ -27,9 +27,39 @@ const order = async (req, res) => {
       return res.status(400).json({ message: 'wallet_id is required' });
     }
 
-    const data = await RFQ.findOne({ client_rfq_id });
-    if(data){
-      const {instrument,side,quantity,price,valid_until} = data;
+    if (!company_id) {
+      return res.status(400).json({ message: 'company_id is required' });
+    }
+
+    if (!access_token) {
+      return res.status(400).json({ message: 'access_token is required' });
+    }
+
+    // Verify Access Token
+    const accessTokenData= await AccessKey.findOne({company_id});
+    if(accessTokenData){
+      const {access_key}=accessTokenData;
+      console.log(access_key);
+      if(access_key!==access_token){
+        return res.status(400).json({
+          "success": false,
+          "message": "Invalid Access token",
+          "error": "please Recheck your token"
+      });
+      }
+    }else{
+      return res.status(400).json({
+        "success": false,
+        "message": "No access token genrated for this company id.",
+        "error": "please Genrate a new access token."
+    });
+    }
+   
+
+    const dataRFQ = await RFQ.findOne({ client_rfq_id });
+    console.log(dataRFQ);
+    if(dataRFQ){
+      const {instrument,side,quantity,price,valid_until} = dataRFQ;
 
       // Ensure that the request body contains the client_rfq_id
       if (new Date(valid_until)<new Date()) {
@@ -39,8 +69,20 @@ const order = async (req, res) => {
           "error": "The validity period for the client RFQ ID has expired."
       });
       }
-      const apiUrl = `https://portal.bcxpro.io/api/check-balance`;
-      const responseBalance = await axios.get(apiUrl);
+      let data = new FormData();
+      data.append('company_id',company_id);
+  
+      let configBalance = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `https://portal.bcxpro.io/api/check-balance/${company_id}`,
+        headers: { 
+          ...data.getHeaders()
+        },
+        data : data
+      };
+  
+      const responseBalance = await axios.request(configBalance);
       const balanceData = responseBalance.data.getTotCryptoBalance.reduce((acc, e) => {
         const currency = e.currency;
         const amount = e.crypto_amt;
@@ -72,8 +114,9 @@ const order = async (req, res) => {
         headers: {  'Authorization': `Token ${process.env.AUTHORIZATION}`, 'Content-Type': 'application/json' },
         data:  request_data
       };
-      console.log(JSON.stringify(config));
+      console.log(JSON.stringify(config),"Config Data");
       const response = await axios.post(config.url, config.data, { headers: config.headers });
+      console.log("I am here");
       const {order_id,trades,executed_price,created}=response.data;
       if(response.data.trades.length>0){
         const {order,trade_id,quantity,side}=trades[0];
@@ -105,6 +148,7 @@ const order = async (req, res) => {
         data.append("executed_price", executed_price);
         data.append("order_id", order_id);
         data.append('wallet_address', wallet_id);
+        data.append('company_id', company_id);
         data.append('withdrawal_request_txn_id', `${withdraw_uuid}`);
 
         let config_withdraw = {
@@ -128,11 +172,12 @@ const order = async (req, res) => {
         //   data : data
         // };        
       try{
-       const response= await axios(config_withdraw);
-       console.log(response);
+        const response= await axios(config_withdraw);
+        console.log(response);
       }catch(ex){
         console.log(ex);
       }
+
       await RFQ.deleteOne({ client_rfq_id });
 
         const trade = new Trade({
@@ -143,6 +188,7 @@ const order = async (req, res) => {
         price:`${price}`,
         cost :`${Number(price*quantity).toFixed(2)} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
         received :`${quantity} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
+        company_id:company_id,
         order_id:`${withdraw_uuid}`
         });
 
@@ -190,26 +236,65 @@ const order = async (req, res) => {
   }
 };
 
-// Get an order
-const get_multiple_order = async (req, res) => {
-    try {
-       const allTrades = await Trade.find();
-       const trades = allTrades.map(trade => {
-        // delete trade._id;
-        // delete trade.__v;
-        // return trade
-        const {message,created,trade_type,instrument,price,cost,received,order_id}=trade;
-        return {message,created,trade_type,instrument,price,cost,received,order_id};
+
+// Function to get multiple orders
+const orders = async (req, res) => {
+  try {
+    // Destructure company_id from the request body
+    const { company_id } = req.body;
+
+    // Validate the presence of company_id in the request body
+    if (!company_id) {
+      return res.status(400).json({
+        success: false,
+        message: "The operation was unsuccessful.",
+        details: {
+          reason: "company_id is required.",
+          suggestion: "Please add a company_id."
+        }
+      });
+    }
+
+    // Fetch trades by company_id from the database
+    const trades = await Trade.find({ company_id }).select('message created trade_type instrument price cost received order_id');
+
+    // Send the appropriate response based on the trades length
+    res.json({
+      success: true,
+      message: trades.length > 0 ? "The trades were fetched successfully." : "No trades found.",
+      data: trades
     });
-    
-       res.json({trades});
-      } catch (error) {
-        console.log(error);
-        res.status(400).json(error);
-      }
+
+  } catch (error) {
+    console.error('Error occurred:', error.message); // Log the error message for debugging
+
+    // Determine the error type and set the response accordingly
+    let status = 500;
+    let errorMessage = {
+      reason: error.message || 'An error occurred',
+      suggestion: "Please try again later."
+    };
+
+    if (error.response) {
+      // Handle known HTTP errors
+      status = error.response.status;
+      errorMessage.reason = error.response.data.error || 'An error occurred';
+    } else if (error.request) {
+      // Handle network-related errors
+      errorMessage.reason = 'Network error occurred';
+      errorMessage.suggestion = "Please check your network connection and try again.";
+    }
+
+    // Send the error response
+    res.status(status).json({
+      success: false,
+      message: "The operation was unsuccessful.",
+      error: errorMessage
+    });
+  }
 };
 
 module.exports = {
     order,
-    get_multiple_order
+    orders
   }

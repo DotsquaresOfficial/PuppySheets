@@ -62,3 +62,4 @@ module.exports = {
     get_a_trade,
     get_multiple_trade
   }
+  

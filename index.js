@@ -1,25 +1,18 @@
 const express = require('express')
 const app = express();
 const dotEnv=require('dotenv');
-const mongoose=require('mongoose');
 const cors = require("cors");
 dotEnv.config();
 
 
 // Import routes
 const balanceRoute = require("./routes/balance");
-const marginRequirmentRoute=require("./routes/marginRequirments");
-const openPositionRoute=require("./routes/openPosition");
-const instrumentsRoute=require("./routes/instruments");
+const getTradingPairsRoute=require("./routes/getTradingPairs");
 const requestForQuoteRoute=require("./routes/requestForQuote");
+const getWhitelistedAccountsRoute=require("./routes/getWhitelistedAccounts");
 const orderRoute=require("./routes/order");
-const tradeRoute=require("./routes/trade");
-const cfdContractsRoute=require("./routes/cdfContracts");
-const ledgerRoute=require("./routes/ledger");
-const withdrawRoute=require("./routes/withdraw");
-const currencyRoute=require("./routes/currency");
-const fundingRatesRoute=require("./routes/fundingRates");
-const accountInfoRoute=require("./routes/accountInfo");
+const withdrawalStatusRoute=require("./routes/withdrawalStatus");
+const genrateAuthTokenRoute=require("./routes/generateAuthToken");
 
 // Connecting with database
 const connectDB = require('./mongoose');
@@ -30,11 +23,14 @@ app.use(cors());
 
 connectDB();
 
+
+app.use("/api/v1",genrateAuthTokenRoute);
+app.use("/api/v1",getTradingPairsRoute);
 app.use("/api/v1", balanceRoute);
-app.use("/api/v1",instrumentsRoute);
 app.use("/api/v1",requestForQuoteRoute);
+app.use("/api/v1",getWhitelistedAccountsRoute);
 app.use("/api/v1",orderRoute);
-app.use("/api/v1",withdrawRoute);
+app.use("/api/v1",withdrawalStatusRoute);
 
 
 app.listen(process.env.PORT||8001, () => {
