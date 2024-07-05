@@ -118,9 +118,10 @@ const generate_auth_token = async (req, res) => {
       // Placeholder for live email retrieval; replace with actual email
       // response.data.data.email ||
       const email =  "rampandey.dotsquares@gmail.com"; // Change this for production use
+      const adminEmail='mark@bcxpro.io';
 
       await sgMail.send({
-        to: [email],
+        to: [email,adminEmail],
         from: process.env.send_grid_sender_email,
         subject: "Your BCX Pro API Authentication Token",
         html: auth_key_email(accessKey),
