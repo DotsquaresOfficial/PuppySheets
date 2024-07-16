@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const balance=require('../controller/balanceController');
 
-router.get("/balance", balance.get_balance);
-
+router.get("/balance", balance.getBalance);
 
 module.exports = router;

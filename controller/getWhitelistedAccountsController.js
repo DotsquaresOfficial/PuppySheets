@@ -1,21 +1,39 @@
 const axios = require('axios');
 const FormData = require('form-data');
+const AccessKey = require('../models/AccessKey');
 
 // Function to get the balance for a company
 const get_whitelisted_accounts = async (req, res) => {
   try {
-    // Validate the presence of company_id in the request body
-    const { company_id } = req.body;
-    if (!company_id) {
+
+    const {access_token} = req.body;
+
+    if (!access_token) {
       return res.status(400).json({
         success: false,
         message: "The operation was unsuccessful.",
         details: {
-          reason: "company_id is required.",
-          suggestion: "Please add a company_id."
+          reason: "access_token is required.",
+          suggestion: "Please add a access_token."
         }
       });
     }
+
+    const accessTokenData = await AccessKey.findOne({access_key:access_token});
+
+    console.log(accessTokenData);
+
+    if (!accessTokenData) {
+      return res.status(400).json({
+        success: false,
+        message: 'The operation was unsuccessful.',
+        error: {
+          reason: 'access token expired or invalid',
+          suggestion: 'Please use a valid access token.'
+        }
+      });
+    }
+    const {company_id}=accessTokenData;
 
     // Create form data for the request
     let data = JSON.stringify({
@@ -38,15 +56,25 @@ const get_whitelisted_accounts = async (req, res) => {
     console.log(response.data);
 
     // Process the response data to format the balance information
-    const whitelistedAccountData = response.data.map(item => ({
-        wallet_address: item.wallet_address
-    }));
+    const whitelistedWalletAddress = response.data.filter(item=>item.wallet_address).map(item => (
+         {
+          id:item.id,
+          wallet:item.wallet_address}
+    ));
+
+    const whitelistedBankAccounts = response.data.filter(item=>item.bank_acc).map(item => (
+     {
+      id:item.id,
+      account:item.bank_acc}
+ ));
+
 
     // Return the response data
     res.status(200).json({
       success: true,
-      message: "Balance fetched successfully.",
-      data: whitelistedAccountData
+      message: "Accounts fetched successfully.",
+      wallets:whitelistedWalletAddress,
+      bank_accounts:whitelistedBankAccounts,
     });
 
   } catch (error) {

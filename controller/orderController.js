@@ -4,16 +4,55 @@ const { v4: uuidv4 } = require('uuid');
 const FormData = require('form-data');
 const Trade = require('../models/Trade'); 
 const AccessKey = require('../models/AccessKey');
+
+const fixCryptoSuffix=(crypto_symbol)=>{
+  if(crypto_symbol==='UST'){
+      return 'USDT';
+  }else if(crypto_symbol==='USC'){
+    return 'USDC';
+  }else if(crypto_symbol==='MAT'){
+    return 'MATIC';
+  }else{
+    return crypto_symbol;
+  }
+}
 const order = async (req, res) => {
   try {
 
  // Destructure required properties from the request body
  const { body } = req;
- const { client_rfq_id, wallet_id, order_type, company_id, access_token } = body;
+ const { client_rfq_id, order_type, access_token } = body;
 
  // Generate UUIDs
  const uuid = uuidv4();
  const withdraw_uuid = uuidv4();
+
+ if (!access_token) {
+   return res.status(400).json({
+     success: false,
+     message: "The operation was unsuccessful.",
+     details: {
+       reason: "access_token is required.",
+       suggestion: "Please add a access_token."
+     }
+   });
+ }
+
+ const accessTokenData = await AccessKey.findOne({access_key:access_token});
+
+ console.log(accessTokenData);
+
+ if (!accessTokenData) {
+   return res.status(400).json({
+     success: false,
+     message: 'The operation was unsuccessful.',
+     error: {
+       reason: 'access token expired or invalid',
+       suggestion: 'Please use a valid access token.'
+     }
+   });
+ }
+ const {company_id}=accessTokenData;
 
  // Validate required fields
  if (!client_rfq_id) {
@@ -23,28 +62,6 @@ const order = async (req, res) => {
      error: {
        reason: 'client_rfq_id is required.',
        suggestion: 'Please provide client_rfq_id in the request body.'
-     }
-   });
- }
-
- if (!wallet_id) {
-   return res.status(400).json({
-     success: false,
-     message: 'The operation was unsuccessful.',
-     error: {
-       reason: 'wallet_id is required.',
-       suggestion: 'Please provide wallet_id in the request body.'
-     }
-   });
- }
-
- if (!company_id) {
-   return res.status(400).json({
-     success: false,
-     message: 'The operation was unsuccessful.',
-     error: {
-       reason: 'company_id is required.',
-       suggestion: 'Please provide company_id in the request body.'
      }
    });
  }
@@ -60,33 +77,6 @@ const order = async (req, res) => {
    });
  }
 
- // Verify Access Token
- const accessTokenData = await AccessKey.findOne({ company_id });
-
- if (!accessTokenData) {
-   return res.status(400).json({
-     success: false,
-     message: 'The operation was unsuccessful.',
-     error: {
-       reason: 'No access token generated for this company ID.',
-       suggestion: 'Please generate a new access token.'
-     }
-   });
- }
-
- const { access_key } = accessTokenData;
- if (access_key !== access_token) {
-   return res.status(400).json({
-     success: false,
-     message: 'The operation was unsuccessful.',
-     error: {
-       reason: 'Invalid Access token.',
-       suggestion: 'Please recheck your token.'
-     }
-   });
- }
-   
-
     const dataRFQ = await RFQ.findOne({ client_rfq_id });
     console.log(dataRFQ);
     if(dataRFQ){
@@ -100,6 +90,7 @@ const order = async (req, res) => {
           "error": "The validity period for the client RFQ ID has expired."
       });
       }
+
       let data = new FormData();
       data.append('company_id',company_id);
   
@@ -122,16 +113,17 @@ const order = async (req, res) => {
       }, {});
 
       const fullBalance={...balanceData,EUR:responseBalance.data.eur_balance}
+     
 
       // Ensure user have enough balance
-      if(Number(fullBalance[`${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`])<Number(price.toString().slice(0, (price.toString().indexOf('.') + 6))*quantity)){
+      if(Number(fullBalance[`${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))}`])<side==='sell'?quantity:Number(price.toString().slice(0, (price.toString().indexOf('.') + 6))*quantity)){
         return res.status(400).json({
-           message: `*Insufficient Balance!`,
-           available: `${fullBalance[`${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`]} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)} `,
-           required: `${Number(price.toString().slice(0, (price.toString().indexOf('.') + 6))*quantity)} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`
-           });
+          message: `*Insufficient Balance!`,
+          available: `${fullBalance[`${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))}`]} ${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))} `,
+          required: `${side=="sell"?quantity: Number(price.toString().slice(0, (price.toString().indexOf('.') + 6))*quantity)} ${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))}`
+          });
       }
-      
+     
 
       let request_data= {instrument:instrument,side:side,quantity:quantity, valid_until: new Date(Date.now() + 300 * 1000), executing_unit: 'risk-adding-strategy',client_order_id:uuid,order_type:order_type?order_type.toUpperCase():'MKT' }
       if(order_type && order_type.toUpperCase()==='FOK'){
@@ -147,7 +139,7 @@ const order = async (req, res) => {
       };
       console.log(JSON.stringify(config),"Config Data");
       const response = await axios.post(config.url, config.data, { headers: config.headers });
-      console.log("I am here");
+
       const {order_id,trades,executed_price,created}=response.data;
       if(response.data.trades.length>0){
         const {order,trade_id,quantity,side}=trades[0];
@@ -178,9 +170,7 @@ const order = async (req, res) => {
         data.append("quoted_rate", price);
         data.append("executed_price", executed_price);
         data.append("order_id", order_id);
-        data.append('wallet_address', wallet_id);
         data.append('company_id', company_id);
-        data.append('withdrawal_request_txn_id', `${withdraw_uuid}`);
 
         let config_withdraw = {
           method: 'post',
@@ -207,8 +197,8 @@ const order = async (req, res) => {
         trade_type:side,
         instrument : instrument,
         price:`${price}`,
-        cost :`${Number(price*quantity).toFixed(2)} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
-        received :`${quantity} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
+        cost :`${side==='sell'?quantity:Number(price*quantity).toFixed(5)} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
+        received :`${side==='sell'?Number(price*quantity).toFixed(5):quantity} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
         company_id:company_id,
         order_id:`${withdraw_uuid}`
         });
@@ -220,8 +210,8 @@ const order = async (req, res) => {
         trade_type:side,
         instrument : instrument,
         price:`${price}`,
-        cost :`${Number(price*quantity).toFixed(2)} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
-        received :`${quantity} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
+        cost :`${side==='sell'?quantity:Number(price*quantity).toFixed(5)} ${side==='sell'?instrument.slice(0,3):instrument.slice(3,6)}`,
+        received :`${side==='sell'?Number(price*quantity).toFixed(5):quantity} ${side==='sell'?instrument.slice(3,6):instrument.slice(0,3)}`,
         // quoted_price:`${price.toString().slice(0, (price.toString().indexOf('.') + 6))}`,
         // executed_price:`${executed_price.toString().slice(0, (executed_price.toString().indexOf('.') + 6))}`,
         order_id:withdraw_uuid
@@ -284,20 +274,35 @@ const order = async (req, res) => {
 // Function to get multiple orders
 const orders = async (req, res) => {
   try {
-    // Destructure company_id from the request body
-    const { company_id } = req.body;
-
-    // Validate the presence of company_id in the request body
-    if (!company_id) {
-      return res.status(400).json({
-        success: false,
-        message: "The operation was unsuccessful.",
-        details: {
-          reason: "company_id is required.",
-          suggestion: "Please add a company_id."
-        }
-      });
+    const { body } = req;
+    const { access_token } = body;
+    
+ if (!access_token) {
+  return res.status(400).json({
+    success: false,
+    message: "The operation was unsuccessful.",
+    details: {
+      reason: "access_token is required.",
+      suggestion: "Please add a access_token."
     }
+  });
+}
+
+const accessTokenData = await AccessKey.findOne({access_key:access_token});
+
+console.log(accessTokenData);
+
+if (!accessTokenData) {
+  return res.status(400).json({
+    success: false,
+    message: 'The operation was unsuccessful.',
+    error: {
+      reason: 'access token expired or invalid',
+      suggestion: 'Please use a valid access token.'
+    }
+  });
+}
+const {company_id}=accessTokenData;
 
     // Fetch trades by company_id from the database
     const trades = await Trade.find({ company_id }).select('message created trade_type instrument price cost received order_id');

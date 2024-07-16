@@ -1,12 +1,13 @@
 const axios = require('axios'); // Import the axios library for making HTTP requests
 const RFQ = require('../models/RFQ'); // Import the RFQ model for database operations
 const { v4: uuidv4 } = require('uuid'); // Import the uuid library for generating unique identifiers
+const AccessKey = require('../models/AccessKey');
 
 // Function to handle the request for quote
 const request_for_quote = async (req, res) => {
   try {
     // Destructure required properties from the request body
-    const { instrument, side, quantity, company_id } = req.body;
+    const { instrument, side, quantity, access_token } = req.body;
 
     // Validate required parameters
     if (!instrument) {
@@ -42,16 +43,33 @@ const request_for_quote = async (req, res) => {
       });
     }
 
-    if (!company_id) {
+    if (!access_token) {
       return res.status(400).json({
         success: false,
         message: "The operation was unsuccessful.",
         details: {
-          reason: "company_id is required.",
-          suggestion: "Please add a company_id."
+          reason: "access_token is required.",
+          suggestion: "Please add a access_token."
         }
       });
     }
+
+    const accessTokenData = await AccessKey.findOne({access_key:access_token});
+
+    console.log(accessTokenData);
+
+    if (!accessTokenData) {
+      return res.status(400).json({
+        success: false,
+        message: 'The operation was unsuccessful.',
+        error: {
+          reason: 'access token expired or invalid',
+          suggestion: 'Please use a valid access token.'
+        }
+      });
+    }
+    
+    const {company_id}=accessTokenData;
 
     // Generate a unique client RFQ ID
     const client_rfq_id = uuidv4();

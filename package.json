@@ -1,6 +1,6 @@
 {
   "name": "lp-api",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "This is LP API for crypto trading",
   "main": "index.js",
   "scripts": {

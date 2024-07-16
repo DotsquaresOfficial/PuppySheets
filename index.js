@@ -83,7 +83,7 @@ const getTradingPairsRoute = require("./routes/getTradingPairs");
 const requestForQuoteRoute = require("./routes/requestForQuote");
 const getWhitelistedAccountsRoute = require("./routes/getWhitelistedAccounts");
 const orderRoute = require("./routes/order");
-const withdrawalStatusRoute = require("./routes/withdrawalStatus");
+const withdrawalStatusRoute = require("./routes/withdrawal");
 const generateAuthTokenRoute = require("./routes/generateAuthToken");
 
 // Validation middleware
@@ -116,7 +116,7 @@ const companyIdValidation = [
 app.use("/api/v1", generateAuthTokenRoute);
 app.use("/api/v1", getTradingPairsRoute);
 app.use("/api/v1", balanceRoute);
-app.use("/api/v1", validateRequest(companyIdValidation), requestForQuoteRoute);
+app.use("/api/v1", requestForQuoteRoute);
 app.use("/api/v1", getWhitelistedAccountsRoute);
 app.use("/api/v1", orderRoute);
 app.use("/api/v1", withdrawalStatusRoute);
