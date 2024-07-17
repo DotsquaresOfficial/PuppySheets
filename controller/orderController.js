@@ -112,18 +112,27 @@ const order = async (req, res) => {
         return acc;
       }, {});
 
-      const fullBalance={...balanceData,EUR:responseBalance.data.eur_balance}
-     
+      const fullBalance={...balanceData,EUR:responseBalance.data.eur_balance,USD: responseBalance.data.usd_balance,GBP: responseBalance.data.gbp_balance }
+
+      const availableBalance=fullBalance[`${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))}`];
+      const requiredBalance=side=="sell"?quantity: Number(price.toString().slice(0, (price.toString().indexOf('.') + 6))*quantity);
 
       // Ensure user have enough balance
-      if(Number(fullBalance[`${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))}`])<side==='sell'?quantity:Number(price.toString().slice(0, (price.toString().indexOf('.') + 6))*quantity)){
+      if(availableBalance<requiredBalance){
         return res.status(400).json({
           message: `*Insufficient Balance!`,
-          available: `${fullBalance[`${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))}`]} ${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))} `,
-          required: `${side=="sell"?quantity: Number(price.toString().slice(0, (price.toString().indexOf('.') + 6))*quantity)} ${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))}`
+          available: `${availableBalance} ${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))}`,
+          required: `${requiredBalance} ${side==='sell'?fixCryptoSuffix(instrument.slice(0,3)):fixCryptoSuffix(instrument.slice(3,6))}`
           });
       }
-     
+
+      if(!availableBalance){
+        return res.status(400).json({
+          "success": false,
+          "message": "Operation unsuccessful.",
+          "error": "Available balance not found."
+      });
+      }
 
       let request_data= {instrument:instrument,side:side,quantity:quantity, valid_until: new Date(Date.now() + 300 * 1000), executing_unit: 'risk-adding-strategy',client_order_id:uuid,order_type:order_type?order_type.toUpperCase():'MKT' }
       if(order_type && order_type.toUpperCase()==='FOK'){

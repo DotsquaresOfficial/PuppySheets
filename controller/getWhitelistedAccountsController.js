@@ -40,8 +40,26 @@ const get_whitelisted_accounts = async (req, res) => {
         "company_id": company_id
     });
 
-    // Configure the request
-    let config = {
+   
+
+    const formData = new FormData(); // Create a new FormData instance.
+    formData.append("company_id", accessTokenData.company_id); // Append the company_id to the FormData instance.
+
+    const axiosConfig = {
+      // Define the axios configuration object for the HTTP request.
+      method: "get", // Set the HTTP method to GET.
+      maxBodyLength: Infinity, // Set the maximum body length to Infinity.
+      url: `https://portal.bcxpro.io/api/check-balance/${accessTokenData.company_id}`, // Set the URL for the HTTP request.
+      headers: formData.getHeaders(), // Set the headers for the HTTP request using the FormData headers.
+      data: formData, // Set the data for the HTTP request to the FormData instance.
+    };
+
+    const axiosResponse = await axios.request(axiosConfig); // Make the HTTP request using axios and await the response.
+    console.log(axiosResponse.data.getTotCryptoBalance.map(e=>e.id.toString()),"Balance Response");
+
+    // Make the API request to get the whitelisted account balance.
+     // Configure the request
+     let config = {
       method: 'get',
       maxBodyLength: Infinity,
       url: `https://portal.bcxpro.io/api/dedicated-wallets`,
@@ -50,21 +68,23 @@ const get_whitelisted_accounts = async (req, res) => {
       },
       data: data
     };
-
-    // Make the API request to get the whitelisted account balance.
     const response = await axios.request(config);
-    console.log(response.data);
+    console.log(response);
+
 
     // Process the response data to format the balance information
     const whitelistedWalletAddress = response.data.filter(item=>item.wallet_address).map(item => (
          {
+         
           id:item.id,
+          currency:axiosResponse.data.getTotCryptoBalance.find((e)=>e.id.toString()===item.crypto_id.toString()).currency_name,
           wallet:item.wallet_address}
     ));
 
     const whitelistedBankAccounts = response.data.filter(item=>item.bank_acc).map(item => (
      {
       id:item.id,
+      currency:item.fiat_id===1?'GBP':item.fiat_id===2?'EUR':item.fiat_id===3?'USD':'Undefined',
       account:item.bank_acc}
  ));
 

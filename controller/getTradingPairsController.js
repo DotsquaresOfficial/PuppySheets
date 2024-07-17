@@ -21,15 +21,23 @@ const get_trading_pairs = async (req, res) => {
       data: data
     };
 
+    const tradingPairsToFilter = [
+      "USTGBP.SPOT", "USTEUR.SPOT", "USTUSD.SPOT", "ADAUST.SPOT", "BTCGBP.SPOT", "BTCUSD.SPOT", "BTCUST.SPOT", "BTCUSC.SPOT", 
+      "ETHGBP.SPOT", "ETHEUR.SPOT", "ETHUSD.SPOT", "ETHUST.SPOT", "ETHUSC.SPOT", "USCGBP.SPOT", "USCEUR.SPOT", "USCUSD.SPOT", 
+      "LTCGBP.SPOT", "LTCEUR.SPOT", "LTCUSD.SPOT", "LTCUST.SPOT", "LTCUSC.SPOT", "SOLGBP.SPOT", "SOLEUR.SPOT", "SOLUSD.SPOT", 
+      "SOLUST.SPOT", "MATGBP.SPOT", "MATEUR.SPOT", "MATUSD.SPOT", "MATUST.SPOT", "DOGGBP.SPOT", "DOGEUR.SPOT", "DOGUSD.SPOT", 
+      "DOGUST.SPOT", "BCHGBP.SPOT", "BCHEUR.SPOT", "BCHUSD.SPOT", "BCHUST.SPOT"
+    ];
+
     // Make the GET request
     const response = await axios.request(config);
-    console.log(JSON.stringify(response.data));
+    console.log(JSON.stringify(response.data.filter((pair)=>tradingPairsToFilter.includes(`${pair.name}`))));
 
     // Send a success response with the fetched data
     return res.status(200).json({
       success: true,
       message: "Trading pairs fetched successfully.",
-      data: response.data,
+      data: response.data.filter((pair)=>tradingPairsToFilter.includes(`${pair.name}`)),
     });
 
   } catch (error) {

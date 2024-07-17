@@ -22,6 +22,11 @@ const withdrawSchema = new mongoose.Schema({
         type: String,
         required: true
     }
+    ,
+    type: {
+        type: String,
+        required: true
+    }
 }, {
     timestamps: true // Adds createdAt and updatedAt fields
 });
