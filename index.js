@@ -14,7 +14,7 @@ const { check, validationResult } = require('express-validator');
 dotEnv.config();
 
 // Validate environment variables
-const requiredEnvVars = ['PORT', 'API_BASE_URL', 'AUTHORIZATION'];
+const requiredEnvVars = ['PORT', 'DB_CONNECT', 'SEND_GRID_EMAIL_API_KEY'];
 requiredEnvVars.forEach(envVar => {
   if (!process.env[envVar]) {
     console.error(`Error: Missing required environment variable ${envVar}`);
@@ -78,48 +78,22 @@ app.use((err, req, res, next) => {
 });
 
 // Import routes
-const balanceRoute = require("./routes/balance");
-const getTradingPairsRoute = require("./routes/getTradingPairs");
-const requestForQuoteRoute = require("./routes/requestForQuote");
-const getWhitelistedAccountsRoute = require("./routes/getWhitelistedAccounts");
-const orderRoute = require("./routes/order");
-const withdrawalStatusRoute = require("./routes/withdrawal");
-const generateAuthTokenRoute = require("./routes/generateAuthToken");
-
-// Validation middleware
-const validateRequest = (schema) => {
-  return [
-    ...schema,
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: "The operation was unsuccessful.",
-          error: {
-            reason: "Validation failed.",
-            details: errors.array()
-          }
-        });
-      }
-      next();
-    }
-  ];
-};
-
-// Example validation schema
-const companyIdValidation = [
-  check('company_id').isNumeric().withMessage('company_id must be a number')
-];
+const testimonialsRoute = require("./routes/testimonials");
+const cmsRoute = require("./routes/cms");
+// const requestForQuoteRoute = require("./routes/requestForQuote");
+// const getWhitelistedAccountsRoute = require("./routes/getWhitelistedAccounts");
+// const orderRoute = require("./routes/order");
+// const withdrawalStatusRoute = require("./routes/withdrawal");
+// const generateAuthTokenRoute = require("./routes/generateAuthToken");
 
 // API routes
-app.use("/api/v1", generateAuthTokenRoute);
-app.use("/api/v1", getTradingPairsRoute);
-app.use("/api/v1", balanceRoute);
-app.use("/api/v1", requestForQuoteRoute);
-app.use("/api/v1", getWhitelistedAccountsRoute);
-app.use("/api/v1", orderRoute);
-app.use("/api/v1", withdrawalStatusRoute);
+app.use("/api/v1", testimonialsRoute);
+app.use("/api/v1", cmsRoute);
+// app.use("/api/v1", getTradingPairsRoute);
+// app.use("/api/v1", requestForQuoteRoute);
+// app.use("/api/v1", getWhitelistedAccountsRoute);
+// app.use("/api/v1", orderRoute);
+// app.use("/api/v1", withdrawalStatusRoute);
 
 // Catch-all route handler for undefined routes (404 Not Found)
 app.use((req, res) => {
@@ -162,5 +136,5 @@ app.use((err, req, res, next) => {
 // Start the server
 const PORT = process.env.PORT || 8001;
 app.listen(PORT, () => {
-  console.log(`LP API listening on port ${PORT}`);
+  console.log(`Puppy Sheets API listening on port ${PORT}`);
 });
